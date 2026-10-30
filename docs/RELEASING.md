@@ -59,11 +59,12 @@ kodu ve sürüm etiketi**dir.
    ```
 
 3. F-Droid'e ekleme, [fdroiddata](https://gitlab.com/fdroid/fdroiddata) deposuna
-   bir `metadata/com.oxygenforge.music.yml` merge request'i ile yapılır. Gerekli
-   alanlar: `Repo`, `License: GPL-3.0-only`, `SourceCode`, en az bir `Builds`
-   girdisi (`versionName`/`versionCode` ve `gradle: [assembleProdRelease]`).
-   Sürüm kodları APK'nın kendi manifestinden okunur; her yeni sürümde
-   `versionCode` artırılmalıdır.
+   bir `metadata/com.oxygenforge.music.yml` merge request'i ile yapılır. Bu dosya
+   hazır: [fdroid/metadata/com.oxygenforge.music.yml](../fdroid/metadata/com.oxygenforge.music.yml);
+   adımlar [fdroid/README.md](../fdroid/README.md) içinde. Gerekli alanlar:
+   `Repo`, `License: GPL-3.0-only`, `SourceCode`, en az bir `Builds` girdisi
+   (`versionName`/`versionCode` ve `gradle: [prodRelease]`). Sürüm kodları APK'nın
+   kendi manifestinden okunur; her yeni sürümde `versionCode` artırılmalıdır.
 4. F-Droid anti-feature bildirimleri elle işaretlenir. Bu uygulamada hesap
    girişi ve çevrimiçi akış isteğe bağlıdır; ağ izni olmadan yerel oynatma
    çalışır. Ücretli/özel bir bileşen eklenirse `NonFreeDep`/`NonFreeNet`
