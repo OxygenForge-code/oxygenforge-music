@@ -1,0 +1,64 @@
+# F-Droid metadata for OxygenForge Music.
+#
+# Copy this file to `metadata/com.oxygenforge.music.yml` in a clone of
+# https://gitlab.com/fdroid/fdroiddata and open a merge request. Nothing here
+# is read by the app itself.
+#
+# Facts this file pins, and why:
+#   * Repo/commit — F-Droid builds the tagged source, not the APK we publish.
+#   * ndk r27 — app/build.gradle.kts pins ndkVersion 27.0.12077973; the DST/DSD
+#     decoder and the AutoMix analysis library are built with CMake.
+#   * output — the release build is ABI-split (armeabi-v7a, arm64-v8a, x86_64)
+#     plus a universal APK. Naming the universal one keeps the build machine
+#     from stopping on "multiple APKs found". Without a keystore.properties the
+#     release build is unsigned, hence the -unsigned suffix: F-Droid signs it.
+
+Categories:
+  - Multimedia
+License: GPL-3.0-only
+AuthorName: OxygenForge
+WebSite: https://github.com/OxygenForge-code/oxygenforge-music
+SourceCode: https://github.com/OxygenForge-code/oxygenforge-music
+IssueTracker: https://github.com/OxygenForge-code/oxygenforge-music/issues
+Changelog: https://github.com/OxygenForge-code/oxygenforge-music/releases
+
+AutoName: OxygenForge Music
+
+Summary: Liquid glass music player for streaming and local files
+Description: |-
+  A music player for Android with a liquid glass interface, on by default and
+  switchable off in Settings.
+
+  It plays from online music sources and from files already on the device,
+  keeps downloads and an offline cache, and offers synced and translatable
+  lyrics, an equalizer, AutoMix transitions and a sleep timer. The home screen
+  icon can be switched between the default OxygenForge mark and glass variants
+  from inside the app.
+
+  OxygenForge Music is a fork of BitChord, redistributed under the GNU General
+  Public License v3.0. Account sign-in and online playback are optional; local
+  playback works without an account. See NOTICE.md in the repository for the
+  full list of changes and third-party licences.
+
+RepoType: git
+Repo: https://github.com/OxygenForge-code/oxygenforge-music.git
+
+# NonFreeNet: streaming depends on YouTube's non-free network service.
+# NonFreeDep: the Cast and Wear OS integrations use Google Play services.
+AntiFeatures:
+  - NonFreeNet
+  - NonFreeDep
+
+Builds:
+  - versionName: 1.0.0
+    versionCode: 1
+    commit: v1.0.0
+    gradle:
+      - prodRelease
+    ndk: r27
+    output: app/build/outputs/apk/prod/release/app-prod-universal-release-unsigned.apk
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 1.0.0
+CurrentVersionCode: 1
