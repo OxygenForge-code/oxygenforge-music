@@ -39,6 +39,17 @@ anahtarıyla** imzalar; GitHub'a yüklediğimiz APK'lar bu sürece girmez.
 5. Kabul edildikten sonra sürümler `UpdateCheckMode: Tags` ile otomatik bulunur:
    her yeni sürümde `versionCode` artırıp `vX.Y.Z` etiketi push etmek yeterlidir.
 
+## Gözden geçirenin soracağı üç şey
+
+1. **Depodaki iki `.onnx` dosyası ne?** `app/src/main/assets/beat_this_int8.onnx`
+   (CPJKU *Beat This!*, ağırlıklar MIT) ve `vocals_umxhq_int8.onnx` (sigsep
+   *Open-Unmix* UMX-HQ, MIT). İkisi de yalnızca çıkarım içindir, eğitim verisi
+   içermez ve kaynakları kendi depolarındadır; ayrıntı `NOTICE.md`'de.
+2. **Neden `NonFreeDep`?** Cast (`play-services-cast-framework`) ve Wear OS
+   (`play-services-wearable`) entegrasyonu Google Play services kullanıyor.
+   Bu iki kütüphane olmadan uygulama açılır, yerel oynatma çalışır.
+3. **Neden `NonFreeNet`?** Akış kaynağı YouTube'un ücretsiz olmayan servisi.
+
 ## Bilinmesi gerekenler
 
 - F-Droid imzası ile bu depodaki APK imzası farklıdır; kullanıcı birinden

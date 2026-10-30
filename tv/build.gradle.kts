@@ -100,6 +100,10 @@ android {
         // the updater installs the TV app here, never the phone app. See
         // AppUpdateChecker.apkAssetUrl.
         buildConfigField("String", "UPDATE_APK_PREFIX", "\"BitChordTV-\"")
+        // This module compiles app/src/main/java, so it must define every
+        // BuildConfig field the phone build declares. No OxygenForge release
+        // repository publishes TV builds yet, so the TV updater stays off too.
+        buildConfigField("boolean", "UPDATE_CHECK_ENABLED", "false")
     }
 
     splits {
