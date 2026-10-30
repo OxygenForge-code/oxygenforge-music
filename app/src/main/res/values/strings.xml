@@ -1231,6 +1231,7 @@
     <string name="app_icon_notice_applied_title">Icon updated</string>
     <string name="app_icon_notice_applied_message">The new icon is on your home screen now. Some launchers keep the old one cached for a few seconds before they refresh it.</string>
     <string name="app_icon_notice_failed_title">Could not change the icon</string>
+    <string name="app_icon_notice_retry">Try again</string>
     <string name="app_icon_notice_unavailable">This icon is not part of the installed build. Update the app and try again.</string>
     <string name="app_icon_notice_refused">The system refused the icon change. The app stayed open and the previous icon was kept.</string>
     <string name="app_icon_notice_unverified">The change could not be verified, so the previous icon was put back.</string>

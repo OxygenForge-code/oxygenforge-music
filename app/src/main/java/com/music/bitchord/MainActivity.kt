@@ -255,6 +255,7 @@ import com.music.bitchord.data.sources.SourceRegistry
 import com.music.bitchord.ui.components.ListenBrainzTokenAlert
 import com.music.bitchord.ui.components.MiniPlayer
 import com.music.bitchord.ui.components.QueueActionNotice
+import com.music.bitchord.ui.components.GlassNoticeHost
 import com.music.bitchord.ui.components.QueueActionNoticeHost
 import com.music.bitchord.ui.components.TopBarAccountButton
 import com.music.bitchord.ui.screens.SegmentedControl
@@ -3857,6 +3858,12 @@ private fun BitChordApp(
                         onTabSelected = onTabSelected,
                     )
                 }
+
+                // Sits beside the bars and the page rather than inside the
+                // page's backdrop layer, which is what lets its glass sample
+                // the screen it is covering instead of blurring itself. See
+                // [GlassNoticeHost] and [GlassNotices].
+                GlassNoticeHost(modifier = Modifier.fillMaxSize())
             }
 
         }

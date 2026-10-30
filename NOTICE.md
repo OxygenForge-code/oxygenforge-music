@@ -11,7 +11,7 @@ Bu çalışma kapsamında uygulamanın Android üretim kimliği `com.oxygenforge
 - Ürün kimliği `com.oxygenforge.music` olarak ayrıldı; uygulama adı, launcher etiketi, bildirim ve splash kaynakları OxygenForge Music'e taşındı. BitChord'a ait telif başlıkları, `LICENSE` ve üçüncü taraf lisans metinleri yerinde bırakıldı.
 - Özgün OxygenForge amblemi üretildi ve launcher, adaptive, monochrome, önizleme ve uygulama içi kaynaklara uygulandı (`tools/generate-icons.py`). Başka bir markanın görseli kullanılmadı.
 - Liquid Glass ilk kurulumda açık; tercih ayarlarda kalıcı olarak saklanıyor. API 31 öncesi cihazlarda GPU bulanıklığı/refraction uygulanmaz, arayüz donanımsız geri dönüş görünümüyle çalışır.
-- Launcher simgesi değiştirme (`AppIcon.apply`) artık istisna fırlatmıyor: alias varlığı ve sonuç doğrulanıyor, değişiklik yarım kalırsa önceki simge geri yükleniyor ve sonuç ayarlarda Liquid Glass bilgi kartıyla (`GlassNotice.kt`) bildiriliyor.
+- Launcher simgesi değiştirme (`AppIcon.apply`) artık istisna fırlatmıyor: alias varlığı ve sonuç doğrulanıyor, değişiklik yarım kalırsa önceki simge geri yükleniyor ve sonuç uygulama genelinde çizilen gerçek Liquid Glass bilgi kartıyla (`GlassNotice.kt`) bildiriliyor. Kart, sayfanın backdrop katmanının dışında durduğu için bulanıklık/mercek efektini arkadaki ekrandan örnekleyebiliyor; hata durumunda kart kapanmıyor ve “tekrar dene” eylemi sunuyor.
 - Ayarların sonundaki kaynak/atıf satırı korundu; `settings_source_code` ve `settings_derived_notice` anahtarları tüm dil dosyalarına eklendi.
 - Hiçbir lisans metni, telif bildirimi veya üçüncü taraf atfı kaldırılmadı veya gizlenmedi.
 

@@ -1335,6 +1335,7 @@
     <string name="app_icon_notice_applied_title">Simge güncellendi</string>
     <string name="app_icon_notice_applied_message">Yeni simge artık ana ekranınızda. Bazı başlatıcılar yenilenmeden önce eski simgeyi birkaç saniye önbellekte tutabilir.</string>
     <string name="app_icon_notice_failed_title">Simge değiştirilemedi</string>
+    <string name="app_icon_notice_retry">Tekrar dene</string>
     <string name="app_icon_notice_unavailable">Bu simge yüklü sürümde yok. Uygulamayı güncelleyip tekrar deneyin.</string>
     <string name="app_icon_notice_refused">Sistem simge değişikliğine izin vermedi. Uygulama kapanmadı, önceki simge korundu.</string>
     <string name="app_icon_notice_unverified">Değişiklik doğrulanamadı, bu yüzden önceki simge geri yüklendi.</string>

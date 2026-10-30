@@ -140,7 +140,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage
-import com.music.bitchord.ui.components.GlassNotice
+import com.music.bitchord.ui.components.GlassNotices
+import com.music.bitchord.ui.components.NoticeAction
 import com.music.bitchord.ui.components.isGlassSupported
 import com.music.bitchord.ui.components.languageDisplayNameRes
 import com.music.bitchord.ui.components.MessageState
@@ -295,11 +296,6 @@ fun SettingsScreen(
     // Saveable so a search survives a trip into one of the pages it found.
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var picking by remember { mutableStateOf<QualityTarget?>(null) }
-    // What the launcher-icon switch reported, held until the choice is closed:
-    // the change lands on the home screen, so the only honest place to answer
-    // for it is a message in front of the user — never a silent no-op, and
-    // never a crash when the platform refuses (see [AppIcon.apply]).
-    var iconChangeResult by remember { mutableStateOf<IconChangeResult?>(null) }
     var pickingDownloadQuality by remember { mutableStateOf(false) }
     var pickingAutomixPerformance by remember { mutableStateOf(false) }
     // What the last export or import did, shown on the row that did it rather
@@ -1500,6 +1496,43 @@ fun SettingsScreen(
             val appIconTitle = stringResource(R.string.app_icon)
             row(appIconTitle, "icon", "launcher", "logo") {
                 var selectedIcon by remember { mutableStateOf(AppIcon.current(context)) }
+                val haptics = LocalHapticFeedback.current
+                val retryLabel = stringResource(R.string.app_icon_notice_retry)
+
+                // Applies one icon and answers for it. Posted to the app's glass
+                // notice rather than shown here: the card has to be drawn outside
+                // the page's backdrop layer for its glass to have anything real to
+                // sample, and the outcome has to survive this row scrolling away.
+                // A refusal keeps the previous icon and offers the attempt again,
+                // since a launcher that said no once often says yes on a retry.
+                fun chooseIcon(option: AppIcon) {
+                    val result = AppIcon.apply(context, option)
+                    selectedIcon = if (result == IconChangeResult.Changed) {
+                        option
+                    } else {
+                        AppIcon.current(context)
+                    }
+                    when (result) {
+                        IconChangeResult.Changed -> GlassNotices.show(
+                            title = context.getString(R.string.app_icon_notice_applied_title),
+                            message = context.getString(R.string.app_icon_notice_applied_message),
+                            tone = NoticeTone.Success,
+                        )
+                        is IconChangeResult.Failed -> GlassNotices.show(
+                            title = context.getString(R.string.app_icon_notice_failed_title),
+                            message = context.getString(result.reason.messageRes),
+                            tone = NoticeTone.Warning,
+                            detail = result.detail,
+                            actions = listOf(
+                                NoticeAction(label = retryLabel, primary = true) {
+                                    GlassNotices.dismiss()
+                                    chooseIcon(option)
+                                },
+                            ),
+                        )
+                    }
+                }
+
                 SettingsRow(icon = Icons.Rounded.Apps, title = appIconTitle)
                 Row(
                     modifier = Modifier
@@ -1526,16 +1559,10 @@ fun SettingsScreen(
                                 .width(84.dp)
                                 .clip(RoundedCornerShape(18.dp))
                                 .clickable {
-                                    val result = AppIcon.apply(context, option)
-                                    // On failure the picker goes back to the icon that
-                                    // is actually on the home screen rather than
-                                    // showing a choice that was refused.
-                                    selectedIcon = if (result == IconChangeResult.Changed) {
-                                        option
-                                    } else {
-                                        AppIcon.current(context)
-                                    }
-                                    iconChangeResult = result
+                                    // A tick under the finger, so the choice lands
+                                    // before the home screen has caught up.
+                                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    chooseIcon(option)
                                 }
                                 .padding(vertical = 6.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -1568,6 +1595,35 @@ fun SettingsScreen(
                                             scaleY = 1f + 0.05f * lift
                                         },
                                 )
+                                // Which one is on the home screen right now, said
+                                // on the tile itself rather than only by the ring.
+                                if (selected) {
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.BottomEnd)
+                                            .graphicsLayer {
+                                                scaleX = lift
+                                                scaleY = lift
+                                                alpha = lift
+                                            }
+                                            .size(22.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.primary)
+                                            .border(
+                                                width = 2.dp,
+                                                color = MaterialTheme.colorScheme.background,
+                                                shape = CircleShape,
+                                            ),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Check,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onPrimary,
+                                            modifier = Modifier.size(13.dp),
+                                        )
+                                    }
+                                }
                             }
                             val labelColor by animateColorAsState(
                                 targetValue = if (selected) MaterialTheme.colorScheme.primary
@@ -1687,36 +1743,6 @@ fun SettingsScreen(
                 },
             )
         }
-    }
-
-    // The launcher icon is the one setting whose result cannot be read back off
-    // this screen, so its outcome — applied, or refused by the platform — is
-    // said out loud here, in the app's own glass.
-    iconChangeResult?.let { result ->
-        val noticeTitle: String
-        val noticeMessage: String
-        val noticeTone: NoticeTone
-        var noticeDetail: String? = null
-        when (result) {
-            IconChangeResult.Changed -> {
-                noticeTitle = stringResource(R.string.app_icon_notice_applied_title)
-                noticeMessage = stringResource(R.string.app_icon_notice_applied_message)
-                noticeTone = NoticeTone.Success
-            }
-            is IconChangeResult.Failed -> {
-                noticeTitle = stringResource(R.string.app_icon_notice_failed_title)
-                noticeMessage = stringResource(result.reason.messageRes)
-                noticeDetail = result.detail
-                noticeTone = NoticeTone.Warning
-            }
-        }
-        GlassNotice(
-            title = noticeTitle,
-            message = noticeMessage,
-            tone = noticeTone,
-            detail = noticeDetail,
-            onDismiss = { iconChangeResult = null },
-        )
     }
 
     // Everything in the Cached songs folder goes with it, so say so first.
