@@ -66,6 +66,7 @@ object AppUpdateChecker {
     private var downloadCancelled = false
 
     suspend fun check() = withContext(Dispatchers.IO) {
+        if (!BuildConfig.UPDATE_CHECK_ENABLED) return@withContext
         runCatching {
             val request = Request.Builder().url(LATEST_RELEASE_URL).build()
             val body = Http.client.newCall(request).execute().use { response ->
@@ -142,7 +143,7 @@ object AppUpdateChecker {
             val dir = File(context.cacheDir, CACHE_SUBDIR).apply { mkdirs() }
             // Drop anything left over from an earlier attempt.
             dir.listFiles()?.forEach { it.delete() }
-            val target = File(dir, "bitchord-${info.version}.apk")
+            val target = File(dir, "oxygenforge-music-${info.version}.apk")
 
             val request = Request.Builder().url(url).build()
             Http.client.newCall(request).execute().use { response ->

@@ -368,7 +368,8 @@ class MainActivity : AppCompatActivity() {
         setContent {
             val theme by AppSettings.themeMode.collectAsStateWithLifecycle()
             val highPerformance by AppSettings.highPerformanceMode.collectAsStateWithLifecycle()
-            val liquidGlassEnabled by AppSettings.liquidGlass.collectAsStateWithLifecycle()
+            val liquidGlassPreference by AppSettings.liquidGlass.collectAsStateWithLifecycle()
+            val liquidGlassEnabled = liquidGlassPreference && isGlassSupported()
             val iosOverscrollFactory = rememberIosOverscrollFactory()
             val performanceRefreshRate by AppSettings.performanceRefreshRate.collectAsStateWithLifecycle()
             val composeView = LocalView.current
@@ -382,7 +383,7 @@ class MainActivity : AppCompatActivity() {
             }
             BitChordTheme(darkTheme = darkTheme) {
                 // The glass surfaces sample this layer, and a layer records only
-                // what is drawn into it — which, for BitChord, is a page that
+                // what is drawn into it — which, for OxygenForge Music, is a page that
                 // paints no background of its own. Everywhere a page is not
                 // showing artwork the recording is transparent, so the glass had
                 // nothing to blur there and you saw straight through it to the

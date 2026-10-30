@@ -9,6 +9,9 @@ import android.net.Uri
 import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
@@ -106,9 +109,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.border
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -121,6 +125,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.viewinterop.AndroidView
 import com.music.bitchord.AppIcon
+import com.music.bitchord.IconChangeResult
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -135,9 +140,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage
+import com.music.bitchord.ui.components.GlassNotice
 import com.music.bitchord.ui.components.isGlassSupported
 import com.music.bitchord.ui.components.languageDisplayNameRes
 import com.music.bitchord.ui.components.MessageState
+import com.music.bitchord.ui.components.NoticeTone
 import com.music.bitchord.ui.components.SearchField
 import com.music.bitchord.ui.components.thumbnailBorder
 import com.music.bitchord.ui.icons.BitChordIcons
@@ -288,6 +295,11 @@ fun SettingsScreen(
     // Saveable so a search survives a trip into one of the pages it found.
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var picking by remember { mutableStateOf<QualityTarget?>(null) }
+    // What the launcher-icon switch reported, held until the choice is closed:
+    // the change lands on the home screen, so the only honest place to answer
+    // for it is a message in front of the user — never a silent no-op, and
+    // never a crash when the platform refuses (see [AppIcon.apply]).
+    var iconChangeResult by remember { mutableStateOf<IconChangeResult?>(null) }
     var pickingDownloadQuality by remember { mutableStateOf(false) }
     var pickingAutomixPerformance by remember { mutableStateOf(false) }
     // What the last export or import did, shown on the row that did it rather
@@ -817,15 +829,13 @@ fun SettingsScreen(
                         if (liquidGlassSupported) {
                             R.string.liquid_glass_subtitle
                         } else {
-                            R.string.liquid_glass_unavailable
+                            R.string.liquid_glass_fallback_subtitle
                         },
                     ),
-                    enabled = liquidGlassSupported,
                     trailing = {
                         Switch(
                             checked = liquidGlass,
                             onCheckedChange = AppSettings::setLiquidGlass,
-                            enabled = liquidGlassSupported,
                             colors = SwitchDefaults.colors(
                                 checkedTrackColor = MaterialTheme.colorScheme.primary,
                                 checkedBorderColor = MaterialTheme.colorScheme.primary,
@@ -1500,47 +1510,77 @@ fun SettingsScreen(
                 ) {
                     AppIcon.entries.forEach { option ->
                         val selected = option == selectedIcon
+                        // The pick springs past its resting size and settles: a light
+                        // bit of life that still respects the system's reduce-motion
+                        // setting, because Compose scales animation duration with it.
+                        val lift by animateFloatAsState(
+                            targetValue = if (selected) 1f else 0f,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMediumLow,
+                            ),
+                            label = "appIconSelection",
+                        )
                         Column(
                             modifier = Modifier
                                 .width(84.dp)
-                                .clip(RoundedCornerShape(16.dp))
+                                .clip(RoundedCornerShape(18.dp))
                                 .clickable {
-                                    selectedIcon = option
-                                    AppIcon.apply(context, option)
+                                    val result = AppIcon.apply(context, option)
+                                    // On failure the picker goes back to the icon that
+                                    // is actually on the home screen rather than
+                                    // showing a choice that was refused.
+                                    selectedIcon = if (result == IconChangeResult.Changed) {
+                                        option
+                                    } else {
+                                        AppIcon.current(context)
+                                    }
+                                    iconChangeResult = result
                                 }
                                 .padding(vertical = 6.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            // A glass foreground holds the finished icon in its own shape on the
-                            // central 72 of 108 dp: scaled 1.5× it fills the tile as designed.
-                            // Only the default goes through an adaptive mask.
-                            val preview = option.previewRes
-                            if (preview == null) {
-                                AndroidView(
-                                    factory = { ctx ->
-                                        android.widget.ImageView(ctx).apply { setImageResource(option.iconRes) }
-                                    },
-                                    modifier = Modifier
-                                        .size(68.dp)
-                                        .clip(RoundedCornerShape(22.dp)),
-                                )
-                            } else {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(70.dp)
+                                    .clip(RoundedCornerShape(21.dp))
+                                    // The ring fades in and thickens as the choice lands.
+                                    .border(
+                                        width = (1.dp + 1.dp * lift),
+                                        color = MaterialTheme.colorScheme.primary.copy(
+                                            alpha = 0.18f + 0.62f * lift,
+                                        ),
+                                        shape = RoundedCornerShape(21.dp),
+                                    ),
+                            ) {
+                                // The preview already holds the finished icon, tile and
+                                // shadow included, in the central 69% of its canvas: drawn
+                                // slightly oversized it fills the tile as designed.
                                 Image(
-                                    painter = painterResource(preview),
+                                    painter = painterResource(option.previewRes),
                                     contentDescription = null,
                                     contentScale = ContentScale.Fit,
                                     modifier = Modifier
-                                        .size(68.dp)
-                                        .scale(1.5f),
+                                        .size(100.dp)
+                                        .graphicsLayer {
+                                            scaleX = 1f + 0.05f * lift
+                                            scaleY = 1f + 0.05f * lift
+                                        },
                                 )
                             }
+                            val labelColor by animateColorAsState(
+                                targetValue = if (selected) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                                animationSpec = tween(220),
+                                label = "appIconLabel",
+                            )
                             Text(
                                 text = stringResource(option.labelRes),
                                 textAlign = TextAlign.Center,
                                 maxLines = 2,
                                 style = MaterialTheme.typography.labelMedium,
-                                color = if (selected) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = labelColor,
                                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                                 modifier = Modifier.padding(top = 6.dp),
                             )
@@ -1559,32 +1599,26 @@ fun SettingsScreen(
         // The version line is the page's colophon, not a setting: it belongs to
         // the whole list, so it goes when the list is narrowed to a few rows.
         if (searchQuery.isBlank()) {
-        Text(
-            text = buildAnnotatedString {
-                append("bitchord $version  ")
-                val linkStyles = TextLinkStyles(
-                    style = SpanStyle(
-                        color = MaterialTheme.colorScheme.primary,
-                        textDecoration = TextDecoration.Underline,
-                    ),
-                )
-                withLink(LinkAnnotation.Url("https://github.com/kushagrasinghx/BitChord", linkStyles)) {
-                    append("GitHub")
-                }
-                append("  ")
-                withLink(LinkAnnotation.Url("https://github.com/kushagrasinghx", linkStyles)) {
-                    append("Developer")
-                }
-                append("  ")
-                withLink(LinkAnnotation.Url("https://discord.gg/pDdKfrdHY6", linkStyles)) {
-                    append("Discord")
-                }
-                append("  ")
-                withLink(LinkAnnotation.Url("https://bitchord.kushagrasingh.in/", linkStyles)) {
-                    append("Website")
-                }
-                append("\n~YouTube Music & Listen Together Backend")
-            },
+            val productName = stringResource(R.string.app_name)
+            val sourceCodeLabel = stringResource(R.string.settings_source_code)
+            val derivedNotice = stringResource(R.string.settings_derived_notice)
+            Text(
+                text = buildAnnotatedString {
+                    append("$productName $version  ")
+                    val linkStyles = TextLinkStyles(
+                        style = SpanStyle(
+                            color = MaterialTheme.colorScheme.primary,
+                            textDecoration = TextDecoration.Underline,
+                        ),
+                    )
+                    // The upstream project stays credited and one tap away: GPLv3
+                    // attribution is part of the app, not only of the repository.
+                    withLink(LinkAnnotation.Url("https://github.com/kushagrasinghx/BitChord", linkStyles)) {
+                        append(sourceCodeLabel)
+                    }
+                    append("\n")
+                    append(derivedNotice)
+                },
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -1653,6 +1687,36 @@ fun SettingsScreen(
                 },
             )
         }
+    }
+
+    // The launcher icon is the one setting whose result cannot be read back off
+    // this screen, so its outcome — applied, or refused by the platform — is
+    // said out loud here, in the app's own glass.
+    iconChangeResult?.let { result ->
+        val noticeTitle: String
+        val noticeMessage: String
+        val noticeTone: NoticeTone
+        var noticeDetail: String? = null
+        when (result) {
+            IconChangeResult.Changed -> {
+                noticeTitle = stringResource(R.string.app_icon_notice_applied_title)
+                noticeMessage = stringResource(R.string.app_icon_notice_applied_message)
+                noticeTone = NoticeTone.Success
+            }
+            is IconChangeResult.Failed -> {
+                noticeTitle = stringResource(R.string.app_icon_notice_failed_title)
+                noticeMessage = stringResource(result.reason.messageRes)
+                noticeDetail = result.detail
+                noticeTone = NoticeTone.Warning
+            }
+        }
+        GlassNotice(
+            title = noticeTitle,
+            message = noticeMessage,
+            tone = noticeTone,
+            detail = noticeDetail,
+            onDismiss = { iconChangeResult = null },
+        )
     }
 
     // Everything in the Cached songs folder goes with it, so say so first.

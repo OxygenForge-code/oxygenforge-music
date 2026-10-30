@@ -35,6 +35,10 @@ keystore.properties
 *.jks
 *.keystore
 
+# A one-off push credential dropped in for a single publish, deleted after use
+.git-token
+.github-token
+
 # Project scratch / debug artifacts
 .shots/
 .tmp_verify/

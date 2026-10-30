@@ -1,11 +1,4 @@
-<!--
-  Status-bar / notification variant of the BitChord mark (assets/LogoTransparent.svg).
-
-  Notification small icons are drawn as a silhouette: the system throws away
-  every colour and keeps only the alpha channel, so the fill has to be opaque
-  white. The source art is 730x484 and off-centre, so the group scales its real
-  bounds down to the 22x22 content box Android expects inside a 24x24 canvas.
--->
+<!-- OxygenForge Music notification mark: monochrome silhouette for Android's small-icon mask. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
