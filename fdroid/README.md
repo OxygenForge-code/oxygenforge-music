@@ -50,6 +50,43 @@ anahtarıyla** imzalar; GitHub'a yüklediğimiz APK'lar bu sürece girmez.
    Bu iki kütüphane olmadan uygulama açılır, yerel oynatma çalışır.
 3. **Neden `NonFreeNet`?** Akış kaynağı YouTube'un ücretsiz olmayan servisi.
 
+## Yerelde `fdroid lint` çalıştırmak (sunucu gerekmez)
+
+F-Droid'in kendi denetleyicisini kurmak için bir sunucu kurmak gerekmiyor:
+`fdroidserver` normal bir Python paketidir. Bu depoda sisteme hiçbir şey
+kurulmadan, proje içi bir sanal ortamda çalıştırıyoruz:
+
+```bash
+bash tools/fdroid-lint.sh              # tüm tarifleri denetle
+bash tools/fdroid-lint.sh <paket-adı>  # tek bir tarifi denetle
+```
+
+İlk çalıştırmada `.tmp_fdroid/venv` oluşturulur, `fdroidserver` kurulur; sonra
+fdroiddata'nın **gerçek** `config.yml`, `config/antiFeatures.yml` ve
+`config/categories.yml` dosyaları indirilip tarif bunlara karşı denetlenir.
+Bu şart, çünkü `fdroid lint` kural listesini çalıştığı depodan okur — bu
+dosyalar olmadan `Multimedia` kategorisi ve `NonFreeNet` anti-feature'ı
+“geçersiz” görünür (ilk denemede tam olarak bu oldu).
+
+Sonuç: **hata yok**, yalnızca iki ortam uyarısı çıkıyor:
+
+- `apksigner not found!` — APK imza doğrulaması içindir, lint için gerekmez.
+- `unsafe permissions on 'config.yml' (should be 0600)` — Windows'ta POSIX izin
+  kavramı olmadığı için çıkar.
+
+`fdroid lint` tarifi denetler, **uygulamayı derlemez**. Gerçek deneme derlemesi
+(`fdroid build`) Linux ister:
+
+- WSL2 (bu makinede `OxygenForge-Builder`, Debian 13) veya bir Linux VM ya da
+  `registry.gitlab.com/fdroid/fdroidserver:buildserver` imajı.
+- Android SDK 37, build-tools, NDK 27.0.12077973, CMake 3.22.1 ve JDK 17.
+- Native decoder + AutoMix kütüphanesi yüzünden uzun sürer; zaten F-Droid'in
+  build sunucusunda çalıştığı için yerelde zorunlu değil.
+
+> Not: WSL'de bu projenin bulunduğu `X:` sürücüsü bağlı değil (`/mnt/c` ve
+> `/mnt/e` var). WSL'de derleme deneyecekseniz depoyu `/mnt/c` veya `/mnt/e`
+> altındaki bir kopyada çalıştırın.
+
 ## Bilinmesi gerekenler
 
 - F-Droid imzası ile bu depodaki APK imzası farklıdır; kullanıcı birinden

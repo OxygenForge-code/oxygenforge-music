@@ -54,3 +54,4 @@ AGENTS.md
 
 # Claude Code session files (launch configs, worktrees)
 .claude/
+.tmp_fdroid/
